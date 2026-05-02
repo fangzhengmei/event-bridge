@@ -42,3 +42,7 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Tempfile artifacts accidentally created when tests run with cwd=repo root
+var/
+files/
