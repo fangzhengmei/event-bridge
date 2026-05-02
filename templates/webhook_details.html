@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ webhook.name }} - event-bridge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+    <link rel="stylesheet" href="/static/css/webhook_details.css" />
+    <script type="module"
+        src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
+</head>
+
+<body data-webhook-id="{{ webhook.id }}">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <sl-icon name="diagram-3" style="font-size: 24px; color: #0066ff;"></sl-icon>
+            <h1>Webhook Monitor</h1>
+            <sl-badge variant="success" pill>Listening...</sl-badge>
+        </div>
+        <div class="header-right">
+            <sl-button href="/" variant="text" size="medium">
+                <sl-icon slot="prefix" name="arrow-left"></sl-icon>
+                Back to Home
+            </sl-button>
+            <sl-button href="/settings/{{ webhook.url }}" variant="text" size="medium">
+                <sl-icon slot="prefix" name="gear"></sl-icon>
+                Settings
+            </sl-button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar - Requests List -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <sl-icon name="list-ul"></sl-icon>
+                    <span>REQUESTS ({{ requests|length }}{% if total_requests is defined and total_requests > requests|length %}/{{ total_requests }}{% endif %})</span>
+                </div>
+                <div class="sidebar-actions">
+                    <sl-icon-button name="trash" label="Clear All" class="delete-all-btn"></sl-icon-button>
+                </div>
+            </div>
+            
+            <div class="filter-controls">
+                <sl-select placeholder="Status Code" size="small" clearable id="status-filter">
+                    <sl-option value="200">200 OK</sl-option>
+                    <sl-option value="201">201 Created</sl-option>
+                    <sl-option value="400">400 Bad Request</sl-option>
+                    <sl-option value="404">404 Not Found</sl-option>
+                    <sl-option value="500">500 Server Error</sl-option>
+                </sl-select>
+                
+                <sl-select placeholder="Date Range" size="small" clearable id="date-filter">
+                    <sl-option value="today">Today</sl-option>
+                    <sl-option value="yesterday">Yesterday</sl-option>
+                    <sl-option value="week">Last 7 days</sl-option>
+                    <sl-option value="month">Last 30 days</sl-option>
+                </sl-select>
+            </div>
+
+            <div class="requests-list" id="request-list">
+                {% if requests %}
+                    {% for req in requests %}
+                    <div class="request-item" data-request-id="{{ req.id }}" data-status="200" onclick="showRequest({{ req.id }})">
+                        <div class="request-header">
+                            <sl-badge variant="primary" size="small">POST</sl-badge>
+                            <sl-badge variant="success" size="small" class="status-badge">200 OK</sl-badge>
+                            <span class="request-time" {% if req.timestamp %}data-utc="{{ req.timestamp.isoformat() }}Z"{% endif %}>{{ req.timestamp.strftime('%b %d, %H:%M:%S') if req.timestamp else 'Just now' }}</span>
+                        </div>
+                        <div class="request-path">/{{ webhook.url }}</div>
+                        <div class="request-meta">
+                            <span class="meta-item">
+                                <sl-icon name="hdd"></sl-icon>
+                                {{ req.body|length }} bytes
+                            </span>
+                            <sl-icon-button name="trash" label="Delete" class="delete-request-btn" onclick="event.stopPropagation(); deleteRequest({{ req.id }})"></sl-icon-button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if total_requests is defined and total_requests > requests|length %}
+                    <div class="load-more-container" id="load-more-container">
+                        <sl-button variant="text" size="small" id="load-more-btn" data-webhook-url="{{ webhook.url }}" data-offset="{{ requests|length }}" data-total="{{ total_requests }}">
+                            <sl-icon slot="prefix" name="arrow-down-circle"></sl-icon>
+                            Load More ({{ total_requests - requests|length }} remaining)
+                        </sl-button>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state">
+                        <sl-icon name="inbox" style="font-size: 48px; color: #94a3b8;"></sl-icon>
+                        <p>No requests yet</p>
+                        <small>Requests will appear here when received</small>
+                    </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Right Content - Request Details -->
+        <main class="content">
+            <div class="content-header">
+                <div class="endpoint-info">
+                    <sl-badge variant="primary" size="medium">POST</sl-badge>
+                    <span class="endpoint-url" id="endpoint-url">/{{ webhook.url }}</span>
+                </div>
+            </div>
+
+            <div class="endpoint-full-url">
+                <code>{{ request.url.scheme }}://{{ request.url.netloc }}/{{ webhook.url }}</code>
+                <sl-copy-button value="{{ request.url.scheme }}://{{ request.url.netloc }}/{{ webhook.url }}"></sl-copy-button>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <sl-icon name="check-circle" style="color: #10b981;"></sl-icon>
+                    <span class="stat-value" id="status-code">200 OK</span>
+                </div>
+                <div class="stat-item">
+                    <sl-icon name="clock"></sl-icon>
+                    <span class="stat-value" id="timestamp">Select a request</span>
+                </div>
+                <div class="stat-item">
+                    <sl-icon name="speedometer"></sl-icon>
+                    <span class="stat-value" id="response-time">--ms</span>
+                </div>
+                <div class="stat-item">
+                    <sl-icon name="hdd"></sl-icon>
+                    <span class="stat-value" id="size">-- bytes</span>
+                </div>
+            </div>
+
+            <!-- Tabs with Copy cURL button -->
+            <div class="tabs-wrapper">
+                <sl-tab-group id="detail-tabs">
+                    <sl-tab slot="nav" panel="body" active>
+                        <sl-icon name="file-earmark-code"></sl-icon>
+                        Body
+                    </sl-tab>
+                    <sl-tab slot="nav" panel="headers">
+                        <sl-icon name="list-columns"></sl-icon>
+                        Headers
+                        <sl-badge id="headers-count" variant="neutral" pill>0</sl-badge>
+                    </sl-tab>
+                    <sl-tab slot="nav" panel="query">
+                        <sl-icon name="question-circle"></sl-icon>
+                        Query Params
+                        <sl-badge id="query-count" variant="neutral" pill>0</sl-badge>
+                    </sl-tab>
+
+                    <!-- Body Panel -->
+                    <sl-tab-panel name="body">
+                        <div class="tab-content">
+                            <div class="tab-toolbar">
+                                <sl-button-group>
+                                    <sl-button size="small" id="format-json">Pretty</sl-button>
+                                    <sl-button size="small" id="format-raw">Raw</sl-button>
+                                </sl-button-group>
+                                <sl-copy-button from="body-content-text"></sl-copy-button>
+                            </div>
+                            <div class="code-container">
+                                <pre id="body-content" class="code-block"><code id="body-content-text">Select a request to view details</code></pre>
+                            </div>
+                        </div>
+                    </sl-tab-panel>
+
+                    <!-- Headers Panel -->
+                    <sl-tab-panel name="headers">
+                        <div class="tab-content">
+                            <div class="tab-toolbar">
+                                <sl-copy-button from="headers-content-text"></sl-copy-button>
+                            </div>
+                            <div class="table-container">
+                                <div id="headers-content-text" style="display: none;"></div>
+                                <table class="data-table" id="headers-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Header</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2" class="empty-message">Select a request to view headers</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </sl-tab-panel>
+
+                    <!-- Query Params Panel -->
+                    <sl-tab-panel name="query">
+                        <div class="tab-content">
+                            <div class="table-container">
+                                <table class="data-table" id="query-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2" class="empty-message">No query parameters</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </sl-tab-panel>
+                </sl-tab-group>
+                <sl-button variant="text" size="small" id="copy-curl-btn" class="copy-curl-btn">
+                    <sl-icon slot="prefix" name="terminal"></sl-icon>
+                    Copy cURL
+                </sl-button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Delete All Dialog -->
+    <sl-dialog class="delete-all-dialog" label="Delete All Requests">
+        <div style="text-align: center; padding: 16px 0;">
+            <sl-icon name="exclamation-triangle" style="color: #ef4444; font-size: 48px; margin-bottom: 16px;"></sl-icon>
+            <p style="margin: 0;">Are you sure you want to delete all <span id="delete-count">{{ total_requests if total_requests is defined else requests|length }}</span> requests?<br>This action cannot be undone.</p>
+        </div>
+        <div slot="footer" style="display: flex; justify-content: center; gap: 12px; width: 100%;">
+            <sl-button class="dialog-cancel-btn" style="min-width: 100px;">Cancel</sl-button>
+            <sl-button class="dialog-confirm-btn" variant="danger" style="min-width: 100px;">Delete All</sl-button>
+        </div>
+    </sl-dialog>
+
+    <script src="/static/js/webhook_details.js"></script>
+</body>
+
+</html>

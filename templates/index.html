@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Endpoints - event-bridge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+    <link rel="stylesheet" href="/static/css/index.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <sl-icon name="diagram-3" style="font-size: 24px; color: #0066ff;"></sl-icon>
+            <h1>Webhook Endpoints</h1>
+            <sl-badge variant="success" pill pulse>
+                <sl-icon name="circle-fill" style="font-size: 8px;"></sl-icon>
+                System Operational
+            </sl-badge>
+        </div>
+        <div class="header-right">
+            <sl-dropdown>
+                <sl-button slot="trigger" caret variant="default" size="medium">
+                    <sl-icon slot="prefix" name="person-circle"></sl-icon>
+                    {{ user.username }}
+                </sl-button>
+                <sl-menu>
+                    <sl-menu-item>
+                        <sl-icon slot="prefix" name="person"></sl-icon>
+                        {{ user.username }}
+                    </sl-menu-item>
+                    <sl-divider></sl-divider>
+                    <sl-menu-item onclick="window.location.href='/logout'">
+                        <sl-icon slot="prefix" name="box-arrow-right"></sl-icon>
+                        Sign out
+                    </sl-menu-item>
+                </sl-menu>
+            </sl-dropdown>
+            <sl-button variant="primary" size="medium" id="create-webhook-btn">
+                <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                Create New Webhook
+            </sl-button>
+        </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-label">TOTAL ENDPOINTS</div>
+            <div class="stat-value">{{ webhooks|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">ACTIVE</div>
+            <div class="stat-value stat-success">{{ webhooks|selectattr('status')|list|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">TOTAL REQUESTS (24h)</div>
+            <div class="stat-value stat-primary">{{ webhooks|sum(attribute='request_count') }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">AVG SUCCESS RATE</div>
+            <div class="stat-value stat-purple">100%</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <sl-input class="search-input" placeholder="Search webhooks..." size="medium" clearable>
+                <sl-icon name="search" slot="prefix"></sl-icon>
+            </sl-input>
+        </div>
+
+        <!-- Webhooks List -->
+        <div class="webhooks-container" id="webhook-list">
+            {% if webhooks %}
+                {% for webhook in webhooks %}
+                <div class="webhook-card" data-webhook-url="{{ webhook.url }}">
+                    <div class="webhook-card-header">
+                        <div class="webhook-icon">
+                            <sl-icon name="box"></sl-icon>
+                        </div>
+                        <div class="webhook-info">
+                            <div class="webhook-title-row">
+                                <a href="{{ webhook.url }}" class="webhook-name">{{ webhook.name }}</a>
+                                {% if webhook.status %}
+                                <sl-badge variant="success" size="small" pill>ACTIVE</sl-badge>
+                                {% else %}
+                                <sl-badge variant="warning" size="small" pill>PAUSED</sl-badge>
+                                {% endif %}
+                            </div>
+                            <div class="webhook-url-row">
+                                <code class="webhook-path">/{{ webhook.url }}</code>
+                                <sl-icon-button name="clipboard" label="Copy" class="copy-url-btn" data-url="{{ request.url.scheme }}://{{ request.url.netloc }}/{{ webhook.url }}"></sl-icon-button>
+                            </div>
+                        </div>
+                        <div class="webhook-actions">
+                            {% if webhook.status %}
+                            <sl-switch class="webhook-toggle" checked data-webhook-url="{{ webhook.url }}"></sl-switch>
+                            {% else %}
+                            <sl-switch class="webhook-toggle" data-webhook-url="{{ webhook.url }}"></sl-switch>
+                            {% endif %}
+                            <sl-button-group>
+                                <sl-button variant="default" size="small" href="{{ webhook.url }}">
+                                    <sl-icon name="file-text"></sl-icon>
+                                    View Logs
+                                </sl-button>
+                                <sl-icon-button name="pencil" label="Edit" href="/settings/{{ webhook.url }}"></sl-icon-button>
+                                <sl-icon-button name="trash" label="Delete" class="delete-webhook-btn" data-webhook-url="{{ webhook.url }}"></sl-icon-button>
+                            </sl-button-group>
+                        </div>
+                    </div>
+                    <div class="webhook-card-footer">
+                        <div class="webhook-stat">
+                            <sl-icon name="clock-history"></sl-icon>
+                            <span>Last activity: <strong class="last-activity-time" {% if webhook.last_activity %}data-utc="{{ webhook.last_activity.isoformat() }}Z"{% endif %}>{% if webhook.last_activity %}{{ webhook.last_activity.strftime('%b %d, %Y %H:%M') }}{% else %}Never{% endif %}</strong></span>
+                        </div>
+                        <div class="webhook-stat">
+                            <sl-icon name="check-circle"></sl-icon>
+                            <span>Success rate: <strong class="success-rate">100%</strong></span>
+                        </div>
+                        <div class="webhook-stat">
+                            <sl-icon name="bar-chart"></sl-icon>
+                            <span>Total: <strong>{{ webhook.request_count }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <sl-icon name="inbox" style="font-size: 64px; color: #94a3b8;"></sl-icon>
+                    <h2>No webhooks yet</h2>
+                    <p>Create your first webhook endpoint to get started</p>
+                    <sl-button variant="primary" size="large" id="empty-create-btn">
+                        <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                        Create New Webhook
+                    </sl-button>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Create Webhook Dialog -->
+    <sl-dialog label="Create New Webhook" class="create-dialog">
+        <div class="dialog-content">
+            <sl-input id="webhook-name" label="Webhook Name" placeholder="e.g., Stripe Payments" required>
+                <sl-icon name="tag" slot="prefix"></sl-icon>
+            </sl-input>
+            <div class="dialog-info">
+                <sl-icon name="info-circle"></sl-icon>
+                <span>A unique URL will be automatically generated for this webhook</span>
+            </div>
+            <div id="webhook-url-preview" class="url-preview" style="display: none;">
+                <label>Generated URL:</label>
+                <div class="url-preview-box">
+                    <code id="generated-url"></code>
+                    <sl-copy-button id="copy-generated-url"></sl-copy-button>
+                </div>
+            </div>
+        </div>
+        <div slot="footer" class="dialog-footer">
+            <sl-button variant="default" size="medium" class="cancel-create">Cancel</sl-button>
+            <sl-button variant="primary" size="medium" class="confirm-create">
+                <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                Create Webhook
+            </sl-button>
+        </div>
+    </sl-dialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <sl-dialog label="Delete Webhook" class="delete-dialog">
+        <div class="dialog-content">
+            <div class="dialog-warning">
+                <sl-icon name="exclamation-triangle" style="color: #ef4444; font-size: 48px;"></sl-icon>
+                <p>Are you sure you want to delete this webhook?</p>
+                <p class="warning-text">This action cannot be undone. All request history will be permanently deleted.</p>
+            </div>
+        </div>
+        <div slot="footer" class="dialog-footer">
+            <sl-button variant="default" size="medium" class="cancel-delete">Cancel</sl-button>
+            <sl-button variant="danger" size="medium" class="confirm-delete">
+                <sl-icon slot="prefix" name="trash"></sl-icon>
+                Delete Webhook
+            </sl-button>
+        </div>
+    </sl-dialog>
+
+    <!-- Alerts -->
+    <sl-alert variant="success" duration="3000" closable class="success-alert">
+        <sl-icon slot="icon" name="check-circle"></sl-icon>
+        <strong id="success-message">Webhook activated!</strong>
+    </sl-alert>
+    
+    <sl-alert variant="warning" duration="3000" closable class="warning-alert">
+        <sl-icon slot="icon" name="pause-circle"></sl-icon>
+        <strong>Webhook paused!</strong>
+    </sl-alert>
+    
+    <sl-alert variant="danger" duration="3000" closable class="danger-alert">
+        <sl-icon slot="icon" name="trash"></sl-icon>
+        <strong>Webhook deleted successfully!</strong>
+    </sl-alert>
+
+    <script src="/static/js/index.js"></script>
+</body>
+
+</html>

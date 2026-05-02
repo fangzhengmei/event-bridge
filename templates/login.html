@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - event-bridge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+    <link rel="stylesheet" href="/static/css/login.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <sl-icon name="diagram-3" class="logo-icon"></sl-icon>
+                <h1>event-bridge</h1>
+                <p class="subtitle">Inbound webhook gateway</p>
+            </div>
+
+            <div class="login-content">
+                <div class="features">
+                    <div class="feature-item">
+                        <sl-icon name="check-circle" class="feature-icon"></sl-icon>
+                        <span>Persistent request log with live updates</span>
+                    </div>
+                    <div class="feature-item">
+                        <sl-icon name="check-circle" class="feature-icon"></sl-icon>
+                        <span>Per-endpoint payload transformation</span>
+                    </div>
+                    <div class="feature-item">
+                        <sl-icon name="check-circle" class="feature-icon"></sl-icon>
+                        <span>Retry with dead-letter queue</span>
+                    </div>
+                </div>
+
+                <div class="divider">
+                    <span>Sign in to continue</span>
+                </div>
+
+                {% if error %}
+                <sl-alert variant="danger" open closable style="margin-bottom: 16px;">
+                    <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+                    {{ error }}
+                </sl-alert>
+                {% endif %}
+
+                <form method="POST" action="/login" class="login-form">
+                    <sl-input name="username" label="Username" required autocomplete="username" autofocus></sl-input>
+                    <sl-input name="password" label="Password" type="password" required autocomplete="current-password"></sl-input>
+                    <sl-button type="submit" variant="primary" size="large" style="width: 100%; margin-top: 16px;">
+                        <sl-icon slot="prefix" name="box-arrow-in-right"></sl-icon>
+                        Sign in
+                    </sl-button>
+                </form>
+
+                <p class="privacy-note">
+                    <sl-icon name="shield-check"></sl-icon>
+                    Local account only. Credentials are stored as bcrypt hashes.
+                </p>
+            </div>
+
+            <div class="login-footer">
+                <p>&copy; 2026 event-bridge.</p>
+            </div>
+        </div>
+
+        <div class="background-decoration">
+            <div class="circle circle-1"></div>
+            <div class="circle circle-2"></div>
+            <div class="circle circle-3"></div>
+        </div>
+    </div>
+
+</body>
+
+</html>

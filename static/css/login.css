@@ -1,0 +1,261 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+}
+
+.login-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    padding: 48px 32px;
+    text-align: center;
+}
+
+.logo-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.login-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.login-content {
+    padding: 40px 32px;
+}
+
+.features {
+    margin-bottom: 32px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 15px;
+    color: #475569;
+}
+
+.feature-icon {
+    font-size: 20px;
+    color: #10b981;
+    flex-shrink: 0;
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+    margin: 32px 0;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.divider span {
+    position: relative;
+    background: #ffffff;
+    padding: 0 16px;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.google-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 24px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.google-button:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.google-button:active {
+    transform: translateY(0);
+}
+
+.google-icon {
+    flex-shrink: 0;
+}
+
+.privacy-note {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #64748b;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.6;
+}
+
+.privacy-note sl-icon {
+    font-size: 18px;
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.login-footer {
+    background: #f8fafc;
+    padding: 20px 32px;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+}
+
+.login-footer p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Background Decoration */
+.background-decoration {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 20s infinite ease-in-out;
+}
+
+.circle-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    left: -150px;
+    animation-delay: 0s;
+}
+
+.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    right: -100px;
+    animation-delay: 5s;
+}
+
+.circle-3 {
+    width: 150px;
+    height: 150px;
+    top: 50%;
+    right: 10%;
+    animation-delay: 10s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-30px) rotate(180deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .login-container {
+        padding: 16px;
+    }
+    
+    .login-header {
+        padding: 32px 24px;
+    }
+    
+    .login-header h1 {
+        font-size: 28px;
+    }
+    
+    .logo-icon {
+        font-size: 48px;
+    }
+    
+    .login-content {
+        padding: 32px 24px;
+    }
+    
+    .google-button {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - {{ webhook.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+    <link rel="stylesheet" href="/static/css/settings.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <sl-icon-button name="arrow-left" label="Back" href="/{{ webhook.url }}" class="back-btn"></sl-icon-button>
+            <sl-icon name="gear" style="font-size: 24px; color: #0066ff;"></sl-icon>
+            <h1>Webhook Settings</h1>
+        </div>
+        <div class="header-right">
+            <sl-dropdown>
+                <sl-button slot="trigger" caret variant="default" size="medium">
+                    <sl-icon slot="prefix" name="person-circle"></sl-icon>
+                    {{ user.username }}
+                </sl-button>
+                <sl-menu>
+                    <sl-menu-item>
+                        <sl-icon slot="prefix" name="person"></sl-icon>
+                        {{ user.username }}
+                    </sl-menu-item>
+                    <sl-divider></sl-divider>
+                    <sl-menu-item onclick="window.location.href='/logout'">
+                        <sl-icon slot="prefix" name="box-arrow-right"></sl-icon>
+                        Sign out
+                    </sl-menu-item>
+                </sl-menu>
+            </sl-dropdown>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Webhook Info Card -->
+        <div class="info-card">
+            <div class="info-header">
+                <div class="info-icon">
+                    <sl-icon name="box"></sl-icon>
+                </div>
+                <div class="info-details">
+                    <h2>{{ webhook.name }}</h2>
+                    <div class="webhook-url-row">
+                        <code class="webhook-path">/{{ webhook.url }}</code>
+                        <sl-copy-button value="{{ request.url.scheme }}://{{ request.url.netloc }}/{{ webhook.url }}"></sl-copy-button>
+                    </div>
+                </div>
+                <div class="info-status">
+                    {% if webhook.status %}
+                    <sl-badge variant="success" size="medium" pill>
+                        <sl-icon name="circle-fill" style="font-size: 8px;"></sl-icon>
+                        ACTIVE
+                    </sl-badge>
+                    {% else %}
+                    <sl-badge variant="warning" size="medium" pill>
+                        <sl-icon name="pause-circle-fill" style="font-size: 8px;"></sl-icon>
+                        PAUSED
+                    </sl-badge>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Form -->
+        <form method="POST" class="settings-form">
+            <!-- Destination URLs Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <sl-icon name="send"></sl-icon>
+                    <div>
+                        <h3>Destination URLs</h3>
+                        <p>Forward incoming webhooks to these endpoints (comma-separated)</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <sl-textarea 
+                        name="destination_urls" 
+                        placeholder="https://api.example.com/webhook, https://backup.example.com/webhook"
+                        rows="4"
+                        value="{{ destinations }}"
+                        help-text="Enter multiple URLs separated by commas. Each webhook will be forwarded to all destinations.">
+                    </sl-textarea>
+                    
+                    <div class="info-box">
+                        <sl-icon name="info-circle"></sl-icon>
+                        <div>
+                            <strong>How it works:</strong>
+                            <p>When a webhook is received, it will be automatically forwarded to all destination URLs. The original headers and transformed body will be sent.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transformation Script Section -->
+            <div class="settings-section">
+                <div class="section-header">
+                    <sl-icon name="code-slash"></sl-icon>
+                    <div>
+                        <h3>Transformation Script</h3>
+                        <p>Transform webhook payload before forwarding (Python code)</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <sl-textarea 
+                        name="transformation_script" 
+                        rows="20"
+                        value="{{ webhook.transformation_script or '' }}"
+                        help-text="Define a 'transform(data)' function that takes the webhook payload and returns the transformed data."
+                        class="code-editor">
+                    </sl-textarea>
+                    
+                    <sl-details summary="View Example Script" class="example-details">
+                        <pre class="code-example">def transform(data):
+    """
+    Transform the incoming webhook data
+    
+    Args:
+        data: Dictionary containing the webhook payload
+        
+    Returns:
+        Dictionary with transformed data
+    """
+    # Example: Extract specific fields
+    transformed = {
+        'event': data.get('type'),
+        'timestamp': data.get('created'),
+        'user_id': data.get('user', {}).get('id')
+    }
+    
+    # Example: Add custom fields
+    transformed['processed_by'] = 'webhook_manager'
+    
+    return transformed</pre>
+                    </sl-details>
+
+                    <div class="warning-box">
+                        <sl-icon name="exclamation-triangle"></sl-icon>
+                        <div>
+                            <strong>Security Note:</strong>
+                            <p>Scripts run in a restricted Python environment. Only safe operations are allowed. Dangerous functions are blocked for security.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+                <sl-button variant="default" size="medium" href="/{{ webhook.url }}" type="button">
+                    <sl-icon slot="prefix" name="x-lg"></sl-icon>
+                    Cancel
+                </sl-button>
+                <sl-button variant="primary" size="medium" type="submit">
+                    <sl-icon slot="prefix" name="check-lg"></sl-icon>
+                    Save Settings
+                </sl-button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Success Alert -->
+    <sl-alert variant="success" duration="3000" closable class="success-alert">
+        <sl-icon slot="icon" name="check-circle"></sl-icon>
+        <strong>Settings saved successfully!</strong>
+    </sl-alert>
+
+    <script>
+        // Show success message if redirected after save
+        if (window.location.search.includes('saved=true')) {
+            document.querySelector('.success-alert').toast();
+        }
+    </script>
+</body>
+
+</html>
