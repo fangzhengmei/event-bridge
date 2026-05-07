@@ -103,7 +103,3 @@ A single mounted volume contains everything stateful:
 ```
 
 Backups: stop the container or `sqlite3 ... ".backup"`, then copy the file.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
